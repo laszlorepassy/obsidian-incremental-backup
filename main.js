@@ -375,7 +375,7 @@ var require_rclone = __commonJS({
     }
     function httpsGet(url, redirects = 5) {
       return new Promise((resolve, reject) => {
-        const req = https.get(url, { headers: { "User-Agent": "obsidian-incremental-backup" } }, (res) => {
+        const req = https.get(url, { headers: { "User-Agent": "obsidian-rclone-incremental-backup" } }, (res) => {
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && redirects > 0) {
             res.resume();
             return resolve(httpsGet(new URL(res.headers.location, url).toString(), redirects - 1));

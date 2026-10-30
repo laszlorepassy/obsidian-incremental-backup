@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-incremental-backup",
+  "name": "obsidian-rclone-incremental-backup",
   "private": true,
   "version": "1.0.1",
   "description": "Incremental Obsidian vault backup using rclone --backup-dir.",
