@@ -1,4 +1,4 @@
-# Incremental Backup
+# Rclone Incremental Backup
 
 An Obsidian plugin that backs up a vault incrementally with [rclone](https://rclone.org), built for large vaults (10–100+ GB). It is modelled on [Simple Backup](https://github.com/laszlorepassy/obsidian-simple-backup) — same schedule, progress notice and wake-lock — but the copying is done by `rclone sync --backup-dir`, as described in [docs/rclone-backup-guide.md](docs/rclone-backup-guide.md).
 
@@ -34,7 +34,7 @@ The plugin looks for rclone at the configured path, then on `PATH`, then in the 
 | Option | What it does |
 | --- | --- |
 | Install with the package manager | Windows: `winget install Rclone.Rclone`. macOS: `brew install rclone`. Linux: the official `curl https://rclone.org/install.sh \| pkexec bash` (graphical password prompt; `sudo -n` if there is no `pkexec`). |
-| Download into the plugin folder | Fetches the official release for your OS/CPU from `downloads.rclone.org`, checks its SHA-256 against the published `SHA256SUMS`, and unpacks the binary to `<vault>/.obsidian/plugins/incremental-backup/bin/`. No admin rights needed. |
+| Download into the plugin folder | Fetches the official release for your OS/CPU from `downloads.rclone.org`, checks its SHA-256 against the published `SHA256SUMS`, and unpacks the binary to `<vault>/.obsidian/plugins/rclone-incremental-backup/bin/`. No admin rights needed. |
 | Open the rclone website | Opens <https://rclone.org/install/> for a manual install. |
 
 Scheduled (unattended) backups never open the dialog; they show the error notice.

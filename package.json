@@ -1,7 +1,7 @@
 {
   "name": "obsidian-incremental-backup",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Incremental Obsidian vault backup using rclone --backup-dir.",
   "main": "main.js",
   "scripts": {

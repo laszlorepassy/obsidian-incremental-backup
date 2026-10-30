@@ -327,7 +327,7 @@ class RcloneInstallModal extends Modal {
     contentEl.empty();
     contentEl.createEl('h2', { text: 'rclone is required' });
     contentEl.createEl('p', {
-      text: 'Incremental Backup uses rclone to copy the vault, and rclone was not found on this computer. Pick one way to get it:',
+      text: 'Rclone Incremental Backup uses rclone to copy the vault, and rclone was not found on this computer. Pick one way to get it:',
     });
 
     const installer = packageManagerInstaller();
@@ -408,7 +408,7 @@ class IncrementalBackupSettingTab extends PluginSettingTab {
     containerEl.empty();
     const s = this.plugin.settings;
 
-    containerEl.createEl('h2', { text: 'Incremental Backup settings' });
+    containerEl.createEl('h2', { text: 'Rclone Incremental Backup settings' });
 
     const rcloneStatus = containerEl.createEl('p', { cls: 'setting-item-description' });
     const refreshRcloneStatus = async () => {
