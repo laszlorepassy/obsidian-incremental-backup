@@ -12,7 +12,7 @@ const RCLONE_DOWNLOADS_URL = 'https://downloads.rclone.org';
 const DEFAULT_SETTINGS = {
   rcloneBinary: 'rclone',
   targetDir: '',
-  fullDirName: 'current',
+  fullDirName: 'current-full-copy',
   incrementalDirName: 'incremental',
   runOnStartup: false,
   runHourly: false,

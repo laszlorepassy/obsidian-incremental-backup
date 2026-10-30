@@ -22,7 +22,7 @@ var require_core = __commonJS({
     var DEFAULT_SETTINGS2 = {
       rcloneBinary: "rclone",
       targetDir: "",
-      fullDirName: "current",
+      fullDirName: "current-full-copy",
       incrementalDirName: "incremental",
       runOnStartup: false,
       runHourly: false,
@@ -1003,7 +1003,7 @@ var IncrementalBackupSettingTab = class extends PluginSettingTab {
       this.display();
     }));
     refreshRcloneStatus();
-    new Setting(containerEl).setName("Target directory").setDesc("The folder that receives the mirror and the incremental history (full path, outside the vault).").addText((text) => {
+    const targetSetting = new Setting(containerEl).setName("Target directory").setDesc("The folder that receives the mirror and the incremental history (full path, outside the vault).").addText((text) => {
       text.setPlaceholder("e.g. D:\\Backups\\Obsidian").setValue(s.targetDir).onChange(async (value) => {
         s.targetDir = value.trim();
         await this.plugin.saveSettings();
@@ -1018,6 +1018,11 @@ var IncrementalBackupSettingTab = class extends PluginSettingTab {
         this.display();
       }
     }));
+    targetSetting.settingEl.style.flexWrap = "wrap";
+    targetSetting.controlEl.style.flexBasis = "100%";
+    targetSetting.controlEl.style.justifyContent = "flex-start";
+    targetSetting.controlEl.style.marginTop = "8px";
+    targetSetting.controlEl.querySelector("input").style.flex = "1 1 auto";
     const targetWarningEl = containerEl.createEl("p", { cls: "setting-item-description" });
     targetWarningEl.style.color = "var(--text-warning)";
     const updateTargetWarning = () => {

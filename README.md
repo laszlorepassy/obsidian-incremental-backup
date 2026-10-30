@@ -8,14 +8,14 @@ An Obsidian plugin that backs up a vault incrementally with [rclone](https://rcl
 
 ```text
 <target>/
-├── current/                      <- always a 1:1, ready-to-open copy of the vault
+├── current-full-copy/                      <- always a 1:1, ready-to-open copy of the vault
 └── incremental/
     ├── 2026-10-30_14-30-00/      <- previous versions of files changed in that run,
     │   └── Notes/Astronomy.md       and files deleted from the vault
     └── 2026-11-02_09-15-22/
 ```
 
-Each run executes `rclone sync <vault> <target>/current --backup-dir <target>/incremental/<timestamp>`. Unchanged files are neither re-read nor rewritten; anything a run overwrites or deletes in `current/` is moved into that run's timestamped folder instead of being lost. A run that changes nothing creates no folder. rclone runs as a separate process, so Obsidian's UI never freezes and large media is not re-compressed.
+Each run executes `rclone sync <vault> <target>/current-full-copy --backup-dir <target>/incremental/<timestamp>`. Unchanged files are neither re-read nor rewritten; anything a run overwrites or deletes in `current-full-copy/` is moved into that run's timestamped folder instead of being lost. A run that changes nothing creates no folder. rclone runs as a separate process, so Obsidian's UI never freezes and large media is not re-compressed.
 
 ## Features
 
@@ -42,7 +42,7 @@ Scheduled (unattended) backups never open the dialog; they show the error notice
 ## Restoring
 
 - **One file:** open `incremental/<timestamp>/` created right after the change or deletion and copy the file back.
-- **Whole vault, latest state:** open `current/` as a vault ("Open folder as vault").
+- **Whole vault, latest state:** open `current-full-copy/` as a vault ("Open folder as vault").
 - **An earlier state:** `rclone copy "<target>/incremental/<timestamp>" "<vault>" -v`, newest folder last. See the guide.
 
 ## Development

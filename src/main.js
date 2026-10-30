@@ -440,7 +440,7 @@ class IncrementalBackupSettingTab extends PluginSettingTab {
         }));
     refreshRcloneStatus();
 
-    new Setting(containerEl)
+    const targetSetting = new Setting(containerEl)
       .setName('Target directory')
       .setDesc('The folder that receives the mirror and the incremental history (full path, outside the vault).')
       .addText((text) => {
@@ -464,6 +464,12 @@ class IncrementalBackupSettingTab extends PluginSettingTab {
             this.display();
           }
         }));
+    // Put the path field and Browse button on their own row, using the full width.
+    targetSetting.settingEl.style.flexWrap = 'wrap';
+    targetSetting.controlEl.style.flexBasis = '100%';
+    targetSetting.controlEl.style.justifyContent = 'flex-start';
+    targetSetting.controlEl.style.marginTop = '8px';
+    targetSetting.controlEl.querySelector('input').style.flex = '1 1 auto';
 
     const targetWarningEl = containerEl.createEl('p', { cls: 'setting-item-description' });
     targetWarningEl.style.color = 'var(--text-warning)';
