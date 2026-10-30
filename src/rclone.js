@@ -277,10 +277,22 @@ async function pruneIncremental(incrementalRoot, keepDays, now) {
     return 0;
   }
   const doomed = planIncrementalPrune(names, now || new Date(), keepDays);
+  // Virtual and USB drives fail transiently (EBUSY/EPERM): retry, and let one stubborn
+  // folder not stop the others from being pruned.
+  let removed = 0;
+  let firstError = null;
   for (const name of doomed) {
-    await fsp.rm(path.join(incrementalRoot, name), { recursive: true, force: true });
+    try {
+      await fsp.rm(path.join(incrementalRoot, name), { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+      removed++;
+    } catch (e) {
+      if (!firstError) firstError = e;
+    }
   }
-  return doomed.length;
+  if (firstError) {
+    throw new Error(`${doomed.length - removed} of ${doomed.length} old folder(s) could not be deleted: ${firstError.message}`);
+  }
+  return removed;
 }
 
 module.exports = {

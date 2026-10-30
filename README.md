@@ -55,6 +55,14 @@ npm test        # includes an end-to-end test that runs real rclone when it is i
 
 Release with `npm run release` after bumping the version in `manifest.json`, `package.json` and `versions.json`.
 
+## Disclosures
+
+- **Runs external programs:** it starts `rclone` (the actual copying) and, only when you click an install button, `winget`, `brew` or `curl … | pkexec bash`.
+- **File access outside the vault:** it reads the vault and writes the backup target folder you choose (and deletes old incremental folders there if you set a retention period). It also writes `backup-errors.log` and, if you use the download option, `bin/rclone` inside the plugin's own folder.
+- **Network:** nothing is sent during a backup, and there is no telemetry or account. The only requests are to `downloads.rclone.org`, and only when you choose "Download into the plugin folder". (Your rclone itself talks to the network only if you point the target at a remote, which this plugin does not set up.)
+- **Desktop only:** it uses Node.js and local executables, so it does not load on mobile.
+- **Release provenance:** release files are built by GitHub Actions from the tagged source and carry build-provenance attestations (`gh attestation verify main.js --repo laszlorepassy/obsidian-rclone-incremental-backup`).
+
 ## Support
 
 If this plugin saves your notes one day, you can [🍪 buy me a cookie](https://paypal.me/repassyl).

@@ -524,10 +524,20 @@ var require_rclone = __commonJS({
         return 0;
       }
       const doomed = planIncrementalPrune(names, now || /* @__PURE__ */ new Date(), keepDays);
+      let removed = 0;
+      let firstError = null;
       for (const name of doomed) {
-        await fsp2.rm(path2.join(incrementalRoot, name), { recursive: true, force: true });
+        try {
+          await fsp2.rm(path2.join(incrementalRoot, name), { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+          removed++;
+        } catch (e) {
+          if (!firstError) firstError = e;
+        }
       }
-      return doomed.length;
+      if (firstError) {
+        throw new Error(`${doomed.length - removed} of ${doomed.length} old folder(s) could not be deleted: ${firstError.message}`);
+      }
+      return removed;
     }
     module2.exports = {
       RcloneMissingError: RcloneMissingError2,
