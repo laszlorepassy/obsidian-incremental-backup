@@ -114,3 +114,14 @@ test('extractFromZip pulls the binary out of stored and deflated entries', () =>
   assert.throws(() => core.extractFromZip(zip, 'missing'), /not found/);
   assert.throws(() => core.extractFromZip(Buffer.from('garbage'), 'rclone'), /Not a valid zip/);
 });
+
+test('--inplace is only passed when asked for', () => {
+  const base = { sourceDir: '/v', targetRoot: '/b', fullDirName: 'c', incrementalDirName: 'i', timestamp: 't', exclude: [] };
+  assert.ok(!core.buildRcloneArgs(base).args.includes('--inplace'));
+  assert.ok(core.buildRcloneArgs({ ...base, inplace: true }).args.includes('--inplace'));
+});
+
+test('isAttemptFailure recognises rclone retry-round summaries', () => {
+  assert.ok(core.isAttemptFailure('Attempt 1/3 failed with 1 errors and: rename x: access denied'));
+  assert.ok(!core.isAttemptFailure('partial file rename failed: ...'));
+});

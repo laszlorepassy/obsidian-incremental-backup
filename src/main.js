@@ -237,6 +237,7 @@ class IncrementalBackupPlugin extends Plugin {
       incrementalDirName: this.settings.incrementalDirName,
       exclude: this.settings.excludeList,
       keepIncrementalDays: this.settings.keepIncrementalDays,
+      inplace: this.settings.inplace,
       onProgress: (p) => {
         const now = Date.now();
         if (now - lastUpdate > 400 && this.activeNotice) {
@@ -255,16 +256,17 @@ class IncrementalBackupPlugin extends Plugin {
       result = await run.run();
       if (this.activeNotice) {
         // Stays up (created with duration 0) until clicked away, so an unattended run can still be confirmed.
-        this.activeNotice.setMessage(
-          result.errors.length
-            ? `Backup finished with ${result.errors.length} error(s):\n${summarizeErrors(result.errors)}\nDetails: backup-errors.log`
-            : result.files || result.deletes
-              ? `Backup finished: ${result.files} changed file(s), ${humanSize(result.bytes)}`
-              : 'Backup finished: nothing had changed'
-        );
+        const summary = result.errors.length
+          ? `Backup finished with ${result.errors.length} error(s):\n${summarizeErrors(result.errors)}\nDetails: backup-errors.log`
+          : (result.files || result.deletes
+            ? `Backup finished: ${result.files} changed file(s), ${humanSize(result.bytes)}`
+            : 'Backup finished: nothing had changed')
+            + (result.retried.length ? `\n(rclone hit ${result.retried.length} error(s) and recovered by retrying; see backup-errors.log)` : '');
+        this.activeNotice.setMessage(summary);
         this.activeNotice = null;
       }
       if (result.errors.length) await this.appendLog(logFilePath, result.errors.join('\n'));
+      else if (result.retried.length) await this.appendLog(logFilePath, 'Recovered by retrying:\n' + result.retried.join('\n'));
     } catch (err) {
       const message = errMessage(err);
       if (!err.cancelled) console.error('Incremental Backup error:', err);
@@ -525,6 +527,13 @@ class IncrementalBackupSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }
         }));
+
+    new Setting(containerEl)
+      .setName('Write files in place (--inplace)')
+      .setDesc('Turn on if the target is a virtual drive such as pCloud Drive or Google Drive that refuses rclone\'s temporary ".partial" files with "access denied" errors. Slightly less safe: an interrupted copy can leave one half-written file in the mirror.')
+      .addToggle((t) => t
+        .setValue(s.inplace)
+        .onChange(async (v) => { s.inplace = v; await this.plugin.saveSettings(); }));
 
     new Setting(containerEl)
       .setName('Delete incremental folders older than (days)')

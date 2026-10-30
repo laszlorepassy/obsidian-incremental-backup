@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
   runHourly: false,
   runDaily: true,
   dailyTime: '20:00',
+  inplace: false,
   keepIncrementalDays: 0, // 0 = keep every incremental folder forever
   excludeList: ['node_modules', '.git', '.trash', '.DS_Store', 'Thumbs.db', 'desktop.ini', '$RECYCLE.BIN', 'System Volume Information'],
   lastRun: null,
@@ -137,7 +138,7 @@ function escapeFilter(name) {
  * the mirror stays 1:1 with the vault, and whatever a run overwrites or
  * deletes in the mirror is moved into a timestamped incremental folder.
  */
-function buildRcloneArgs({ sourceDir, targetRoot, fullDirName, incrementalDirName, timestamp, exclude }) {
+function buildRcloneArgs({ sourceDir, targetRoot, fullDirName, incrementalDirName, timestamp, exclude, inplace }) {
   const current = path.join(targetRoot, fullDirName);
   const incremental = path.join(targetRoot, incrementalDirName, timestamp);
   const args = [
@@ -149,6 +150,8 @@ function buildRcloneArgs({ sourceDir, targetRoot, fullDirName, incrementalDirNam
     '--stats', '1s',
     '--stats-log-level', 'NOTICE',
   ];
+  // Virtual drives (pCloud, Google Drive, ...) often refuse the .partial -> final rename rclone normally does.
+  if (inplace) args.push('--inplace');
   for (const raw of exclude || []) {
     const name = escapeFilter(String(raw).trim());
     if (!name) continue;
@@ -177,6 +180,11 @@ function parseRcloneLine(line) {
   const message = String((obj && obj.msg) || text);
   if (level === 'error' || level === 'critical') return { kind: 'error', message };
   return { kind: 'other', message };
+}
+
+/** True for rclone's "Attempt 1/3 failed with 1 errors and: ..." line that ends a failed retry round. */
+function isAttemptFailure(message) {
+  return /^Attempt \d+\/\d+ failed/.test(String(message));
 }
 
 function summarizeErrors(errors, maxShown = 2, maxLen = 160) {
@@ -312,6 +320,7 @@ module.exports = {
   buildRcloneArgs,
   parseRcloneLine,
   summarizeErrors,
+  isAttemptFailure,
   planIncrementalPrune,
   rcloneTarget,
   rcloneZipName,

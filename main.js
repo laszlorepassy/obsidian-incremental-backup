@@ -28,6 +28,7 @@ var require_core = __commonJS({
       runHourly: false,
       runDaily: true,
       dailyTime: "20:00",
+      inplace: false,
       keepIncrementalDays: 0,
       // 0 = keep every incremental folder forever
       excludeList: ["node_modules", ".git", ".trash", ".DS_Store", "Thumbs.db", "desktop.ini", "$RECYCLE.BIN", "System Volume Information"],
@@ -108,7 +109,7 @@ var require_core = __commonJS({
     function escapeFilter(name) {
       return name.replace(/[\\*?[\]{}]/g, "\\$&");
     }
-    function buildRcloneArgs({ sourceDir, targetRoot, fullDirName, incrementalDirName, timestamp, exclude }) {
+    function buildRcloneArgs({ sourceDir, targetRoot, fullDirName, incrementalDirName, timestamp, exclude, inplace }) {
       const current = path2.join(targetRoot, fullDirName);
       const incremental = path2.join(targetRoot, incrementalDirName, timestamp);
       const args = [
@@ -126,6 +127,7 @@ var require_core = __commonJS({
         "--stats-log-level",
         "NOTICE"
       ];
+      if (inplace) args.push("--inplace");
       for (const raw of exclude || []) {
         const name = escapeFilter(String(raw).trim());
         if (!name) continue;
@@ -147,6 +149,9 @@ var require_core = __commonJS({
       const message = String(obj && obj.msg || text);
       if (level === "error" || level === "critical") return { kind: "error", message };
       return { kind: "other", message };
+    }
+    function isAttemptFailure(message) {
+      return /^Attempt \d+\/\d+ failed/.test(String(message));
     }
     function summarizeErrors2(errors, maxShown = 2, maxLen = 160) {
       const short = (e) => {
@@ -260,6 +265,7 @@ var require_core = __commonJS({
       buildRcloneArgs,
       parseRcloneLine,
       summarizeErrors: summarizeErrors2,
+      isAttemptFailure,
       planIncrementalPrune,
       rcloneTarget,
       rcloneZipName,
@@ -288,6 +294,7 @@ var require_rclone = __commonJS({
       formatTimestamp,
       parseRcloneLine,
       parseRcloneVersion,
+      isAttemptFailure,
       planIncrementalPrune,
       rcloneTarget,
       rcloneZipName,
@@ -434,7 +441,8 @@ var require_rclone = __commonJS({
           fullDirName: o.fullDirName,
           incrementalDirName: o.incrementalDirName,
           timestamp: formatTimestamp(/* @__PURE__ */ new Date()),
-          exclude: o.exclude
+          exclude: o.exclude,
+          inplace: o.inplace
         });
         return new Promise((resolve, reject) => {
           let child;
@@ -445,6 +453,7 @@ var require_rclone = __commonJS({
           }
           this.child = child;
           const errors = [];
+          const retried = [];
           const other = [];
           let stats = null;
           let pending = "";
@@ -455,7 +464,11 @@ var require_rclone = __commonJS({
               stats = parsed.stats;
               if (o.onProgress) o.onProgress({ files: stats.transfers || 0, totalFiles: stats.totalTransfers || 0, bytes: stats.bytes || 0, totalBytes: stats.totalBytes || 0 });
             } else if (parsed.kind === "error") {
-              errors.push(parsed.message);
+              if (isAttemptFailure(parsed.message)) {
+                retried.push(...errors.splice(0));
+              } else {
+                errors.push(parsed.message);
+              }
             } else {
               other.push(parsed.message);
               if (other.length > 20) other.shift();
@@ -494,6 +507,7 @@ var require_rclone = __commonJS({
               deletes: stats ? stats.deletes || 0 : 0,
               pruned,
               errors,
+              retried,
               current,
               incremental
             });
@@ -840,6 +854,7 @@ var IncrementalBackupPlugin = class extends Plugin {
       incrementalDirName: this.settings.incrementalDirName,
       exclude: this.settings.excludeList,
       keepIncrementalDays: this.settings.keepIncrementalDays,
+      inplace: this.settings.inplace,
       onProgress: (p) => {
         const now = Date.now();
         if (now - lastUpdate > 400 && this.activeNotice) {
@@ -856,14 +871,15 @@ var IncrementalBackupPlugin = class extends Plugin {
     try {
       result = await run.run();
       if (this.activeNotice) {
-        this.activeNotice.setMessage(
-          result.errors.length ? `Backup finished with ${result.errors.length} error(s):
+        const summary = result.errors.length ? `Backup finished with ${result.errors.length} error(s):
 ${summarizeErrors(result.errors)}
-Details: backup-errors.log` : result.files || result.deletes ? `Backup finished: ${result.files} changed file(s), ${humanSize(result.bytes)}` : "Backup finished: nothing had changed"
-        );
+Details: backup-errors.log` : (result.files || result.deletes ? `Backup finished: ${result.files} changed file(s), ${humanSize(result.bytes)}` : "Backup finished: nothing had changed") + (result.retried.length ? `
+(rclone hit ${result.retried.length} error(s) and recovered by retrying; see backup-errors.log)` : "");
+        this.activeNotice.setMessage(summary);
         this.activeNotice = null;
       }
       if (result.errors.length) await this.appendLog(logFilePath, result.errors.join("\n"));
+      else if (result.retried.length) await this.appendLog(logFilePath, "Recovered by retrying:\n" + result.retried.join("\n"));
     } catch (err) {
       const message = errMessage(err);
       if (!err.cancelled) console.error("Incremental Backup error:", err);
@@ -1057,6 +1073,10 @@ var IncrementalBackupSettingTab = class extends PluginSettingTab {
         s.dailyTime = time;
         await this.plugin.saveSettings();
       }
+    }));
+    new Setting(containerEl).setName("Write files in place (--inplace)").setDesc(`Turn on if the target is a virtual drive such as pCloud Drive or Google Drive that refuses rclone's temporary ".partial" files with "access denied" errors. Slightly less safe: an interrupted copy can leave one half-written file in the mirror.`).addToggle((t) => t.setValue(s.inplace).onChange(async (v) => {
+      s.inplace = v;
+      await this.plugin.saveSettings();
     }));
     new Setting(containerEl).setName("Delete incremental folders older than (days)").setDesc("0 keeps the whole history forever. Only timestamp-named folders inside the incremental folder are ever deleted.").addText((text) => text.setValue(String(s.keepIncrementalDays)).onChange(async (v) => {
       const n = parseInt(v, 10);

@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
 const {
-  RCLONE_DOWNLOADS_URL, buildRcloneArgs, formatTimestamp, parseRcloneLine, parseRcloneVersion,
+  RCLONE_DOWNLOADS_URL, buildRcloneArgs, formatTimestamp, parseRcloneLine, parseRcloneVersion, isAttemptFailure,
   planIncrementalPrune, rcloneTarget, rcloneZipName, findSha256, extractFromZip, installCommand,
 } = require('./core');
 
@@ -189,6 +189,7 @@ class BackupRun {
       incrementalDirName: o.incrementalDirName,
       timestamp: formatTimestamp(new Date()),
       exclude: o.exclude,
+      inplace: o.inplace,
     });
 
     return new Promise((resolve, reject) => {
@@ -201,6 +202,7 @@ class BackupRun {
       this.child = child;
 
       const errors = [];
+      const retried = []; // errors of attempts rclone later recovered from by retrying
       const other = [];
       let stats = null;
       let pending = '';
@@ -211,7 +213,12 @@ class BackupRun {
           stats = parsed.stats;
           if (o.onProgress) o.onProgress({ files: stats.transfers || 0, totalFiles: stats.totalTransfers || 0, bytes: stats.bytes || 0, totalBytes: stats.totalBytes || 0 });
         } else if (parsed.kind === 'error') {
-          errors.push(parsed.message);
+          if (isAttemptFailure(parsed.message)) {
+            // rclone retries the whole run; what failed in this round only matters if the last round fails too.
+            retried.push(...errors.splice(0));
+          } else {
+            errors.push(parsed.message);
+          }
         } else {
           other.push(parsed.message);
           if (other.length > 20) other.shift();
@@ -251,6 +258,7 @@ class BackupRun {
           deletes: stats ? stats.deletes || 0 : 0,
           pruned,
           errors,
+          retried,
           current,
           incremental,
         });
