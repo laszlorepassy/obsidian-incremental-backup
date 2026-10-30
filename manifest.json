@@ -1,0 +1,10 @@
+{
+  "id": "incremental-backup",
+  "name": "Incremental Backup",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Incremental vault backup with rclone: a 1:1 mirror plus timestamped folders holding every changed or deleted file. Requires rclone.",
+  "author": "Laszlo Repassy",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

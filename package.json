@@ -1,0 +1,16 @@
+{
+  "name": "obsidian-incremental-backup",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Incremental Obsidian vault backup using rclone --backup-dir.",
+  "main": "main.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test",
+    "release": "node scripts/publish.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
