@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS = {
   dailyTime: '20:00',
   inplace: false,
   keepIncrementalDays: 0, // 0 = keep every incremental folder forever
-  excludeList: ['node_modules', '.git', '.trash', '.DS_Store', 'Thumbs.db', 'desktop.ini', '$RECYCLE.BIN', 'System Volume Information'],
+  excludeList: ['node_modules', '.git', '.trash', '.DS_Store', 'Thumbs.db', 'desktop.ini', '$RECYCLE.BIN', 'System Volume Information', '.backup-complete'],
   lastRun: null,
   lastDailyRunDate: null,
 };

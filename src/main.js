@@ -98,7 +98,9 @@ class IncrementalBackupPlugin extends Plugin {
   targetProblem(targetDir) {
     const basePath = this.getVaultBasePath();
     if (!basePath || !targetDir) return null;
-    switch (targetLocation(targetDir, basePath)) {
+    // Compare real paths, so a target reached through a symlink or junction into the vault is caught too.
+    const real = (p) => { try { return fs.realpathSync.native(p); } catch (e) { return p; } };
+    switch (targetLocation(real(targetDir), real(basePath))) {
       case 'vault-root':
         return 'The target directory cannot be the vault itself — pick a folder outside the vault.';
       case 'inside-vault':

@@ -31,7 +31,7 @@ var require_core = __commonJS({
       inplace: false,
       keepIncrementalDays: 0,
       // 0 = keep every incremental folder forever
-      excludeList: ["node_modules", ".git", ".trash", ".DS_Store", "Thumbs.db", "desktop.ini", "$RECYCLE.BIN", "System Volume Information"],
+      excludeList: ["node_modules", ".git", ".trash", ".DS_Store", "Thumbs.db", "desktop.ini", "$RECYCLE.BIN", "System Volume Information", ".backup-complete"],
       lastRun: null,
       lastDailyRunDate: null
     };
@@ -741,7 +741,14 @@ var IncrementalBackupPlugin = class extends Plugin {
   targetProblem(targetDir) {
     const basePath = this.getVaultBasePath();
     if (!basePath || !targetDir) return null;
-    switch (targetLocation(targetDir, basePath)) {
+    const real = (p) => {
+      try {
+        return fs.realpathSync.native(p);
+      } catch (e) {
+        return p;
+      }
+    };
+    switch (targetLocation(real(targetDir), real(basePath))) {
       case "vault-root":
         return "The target directory cannot be the vault itself \u2014 pick a folder outside the vault.";
       case "inside-vault":
