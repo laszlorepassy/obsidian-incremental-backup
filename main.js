@@ -1098,6 +1098,9 @@ var IncrementalBackupSettingTab = class extends PluginSettingTab {
         cls: "setting-item-description"
       });
     }
+    new Setting(containerEl).addButton((btn) => btn.setButtonText("\u{1F36A} Buy me a cookie").onClick(() => {
+      window.open("https://paypal.me/repassyl", "_blank");
+    }));
   }
 };
 module.exports = IncrementalBackupPlugin;

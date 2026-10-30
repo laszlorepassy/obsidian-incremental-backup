@@ -55,6 +55,10 @@ npm test        # includes an end-to-end test that runs real rclone when it is i
 
 Release with `npm run release` after bumping the version in `manifest.json`, `package.json` and `versions.json`.
 
+## Support
+
+If this plugin saves your notes one day, you can [🍪 buy me a cookie](https://paypal.me/repassyl).
+
 ## License
 
 MIT
