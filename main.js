@@ -771,6 +771,15 @@ var IncrementalBackupPlugin = class extends Plugin {
     if (!base) return null;
     return path.join(base, this.app.vault.configDir, "plugins", this.manifest.id);
   }
+  /**
+   * The plugin's own data.json (rewritten after every run for lastRun) and error log live in the
+   * vault; left in, every run would see them as changed and create an incremental folder for nothing.
+   * Anchored with a leading slash so only these root-relative paths match.
+   */
+  ownStateExcludes() {
+    const dir = `/${this.app.vault.configDir}/plugins/${this.manifest.id}/`;
+    return [dir + "data.json", dir + "backup-errors.log"];
+  }
   getLogFilePath() {
     const dir = this.getPluginDir();
     return dir ? path.join(dir, "backup-errors.log") : null;
@@ -869,7 +878,7 @@ var IncrementalBackupPlugin = class extends Plugin {
       targetRoot: targetDir,
       fullDirName: this.settings.fullDirName,
       incrementalDirName: this.settings.incrementalDirName,
-      exclude: this.settings.excludeList,
+      exclude: [...this.settings.excludeList, ...this.ownStateExcludes()],
       keepIncrementalDays: this.settings.keepIncrementalDays,
       inplace: this.settings.inplace,
       onProgress: (p) => {
