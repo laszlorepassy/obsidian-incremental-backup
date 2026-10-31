@@ -791,9 +791,10 @@ var IncrementalBackupPlugin = class extends Plugin {
   }
   /**
    * Resolves to { binary, version } for a working rclone, or null when there is none.
-   * With `interactive`, a missing rclone opens the install helper.
+   * With `interactive`, a missing rclone opens the install helper and a found one is confirmed
+   * in a notice, unless `quiet` (a backup run only wants to hear about problems).
    */
-  async ensureRclone({ interactive } = {}) {
+  async ensureRclone({ interactive, quiet } = {}) {
     const localBin = this.getLocalBinDir();
     const found = await findRclone(this.settings.rcloneBinary, localBin ? [localBin] : []);
     if (found) {
@@ -801,7 +802,7 @@ var IncrementalBackupPlugin = class extends Plugin {
         this.settings.rcloneBinary = found.binary;
         await this.saveSettings();
       }
-      if (interactive) new Notice(`rclone ${found.version} is installed (${found.binary}).`);
+      if (interactive && !quiet) new Notice(`rclone ${found.version} is installed (${found.binary}).`);
       return found;
     }
     new Notice(
@@ -859,7 +860,7 @@ var IncrementalBackupPlugin = class extends Plugin {
     this.isRunning = true;
     let rclone;
     try {
-      rclone = await this.ensureRclone({ interactive: trigger === "manual" });
+      rclone = await this.ensureRclone({ interactive: trigger === "manual", quiet: true });
     } catch (err) {
       this.isRunning = false;
       new Notice("Error: " + errMessage(err));
